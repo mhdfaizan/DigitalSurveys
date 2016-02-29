@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">DigitalSurveys</string>
+    <string name="welcome_user">Welcome, </string>
+
+    <string name="ref_dialog_ok">OK</string>
+    <string name="ref_dialog_cancel">CANCEL</string>
+
+    <string name="survey_new">NEW</string>
+    <string name="survey_existing">EXISTING</string>
+</resources>

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/holder"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Activities.SurveyActivity">
+
+    <RelativeLayout
+        android:id="@+id/topPanel"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical"
+        android:background="@android:color/holo_blue_dark"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+
+        <TextView
+            android:id="@+id/welcome_user"
+            android:layout_alignParentLeft="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/form_text_size"
+            android:text="@string/welcome_user"/>
+
+        <TextView
+            android:id="@+id/date_time"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/form_text_size"
+            android:text="date_time"/>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/middlePanel"
+        android:layout_below="@+id/topPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
+
+        <TextView
+            android:id="@+id/reference_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:textSize="@dimen/form_text_size"
+            android:layout_marginBottom="20dp"
+            android:textColor="@android:color/holo_blue_dark"
+            android:text="Reference Number: "/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shop Nature"
+                android:textSize="@dimen/form_text_size"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:textColor="@android:color/holo_blue_dark"
+                android:layout_marginRight="12dp"/>
+
+            <RadioGroup
+                android:id="@+id/shop_nature"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:checkedButton="@+id/rb_existing">
+
+                <RadioButton
+                    android:id="@+id/rb_existing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/form_text_size"
+                    android:text="Existing"/>
+
+                <RadioButton
+                    android:id="@+id/rb_new"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/form_text_size"
+                    android:text="New"/>
+
+            </RadioGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:layout_marginLeft="-3dp">
+
+            <EditText
+                android:id="@+id/shop_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Shop Number"
+                android:inputType="numberDecimal"
+                android:textSize="@dimen/form_text_size"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status"
+                android:textSize="@dimen/form_text_size"
+                android:gravity="center_vertical"
+                android:layout_gravity="center_vertical"
+                android:textColor="@android:color/holo_blue_dark"
+                android:layout_marginRight="50dp"/>
+
+            <RadioGroup
+                android:id="@+id/shop_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:checkedButton="@+id/rb_open">
+
+                <RadioButton
+                    android:id="@+id/rb_open"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/form_text_size"
+                    android:text="Open"/>
+
+                <RadioButton
+                    android:id="@+id/rb_closed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/form_text_size"
+                    android:text="Closed"/>
+
+                <RadioButton
+                    android:id="@+id/rb_business_closed"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/form_text_size"
+                    android:text="Business Closed"/>
+
+            </RadioGroup>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Geo Location"
+                android:textSize="@dimen/form_text_size"
+                android:gravity="center_vertical"
+                android:textColor="@android:color/holo_blue_dark"
+                android:layout_marginRight="26dp"/>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/coordinates"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Latitude, Longitude"
+                    android:textColor="@android:color/black"
+                    android:textSize="@dimen/form_text_size"
+                    android:gravity="center"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginBottom="5dp"/>
+
+                <Button
+                    android:id="@+id/see_my_location"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/form_text_size"
+                    android:textColor="@android:color/white"
+                    android:text="See My Location"
+                    android:background="@android:color/holo_blue_dark"
+                    />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Outlet Image"
+                android:textSize="@dimen/form_text_size"
+                android:gravity="center_vertical"
+                android:textColor="@android:color/holo_blue_dark"
+                android:layout_marginRight="30dp"/>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/image_count"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Image Count: 0"
+                    android:textColor="@android:color/black"
+                    android:textSize="@dimen/form_text_size"
+                    android:gravity="center"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginBottom="5dp"/>
+
+                <Button
+                    android:id="@+id/camera"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/form_text_size"
+                    android:textColor="@android:color/white"
+                    android:background="@android:color/holo_blue_dark"
+                    android:text="Camera"
+                    />
+
+            </LinearLayout>
+
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_below="@id/middlePanel"
+        android:layout_width="match_parent"
+        android:gravity="bottom"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <Button
+            android:id="@+id/save_outlet"
+            android:background="@android:color/holo_green_light"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Outlet Data"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+
+
+</RelativeLayout>

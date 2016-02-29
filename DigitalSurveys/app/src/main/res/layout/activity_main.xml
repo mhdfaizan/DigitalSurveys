@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".Activities.MainActivity">
+
+
+    <TextView
+        android:id="@id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Digital Survey Application"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:textSize="23sp"
+        android:layout_marginTop="50dp"
+        android:layout_marginBottom="140dp"
+        android:textColor="@android:color/holo_blue_dark"/>
+
+    <EditText
+        android:layout_below="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:hint="Username"
+        android:textColor="@android:color/holo_blue_dark"
+        android:id="@+id/username"/>
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textPassword"
+        android:textColor="@android:color/holo_blue_dark"
+        android:hint="Password"
+        android:id="@+id/password"
+        android:layout_below="@+id/username"/>
+
+    <Button
+        android:layout_below="@+id/password"
+        android:id="@+id/login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:textSize="20sp"
+        android:layout_marginTop="20dp"
+        android:textColor="@android:color/white"
+        android:background="@android:color/holo_blue_dark"/>
+
+</RelativeLayout>
