@@ -7,4 +7,6 @@
 
     <string name="survey_new">NEW</string>
     <string name="survey_existing">EXISTING</string>
+
+    <string name="google_maps_key">AIzaSyDSXtlT_4ejEDlIMDqWB7BPG1G7guRfNXQ</string>
 </resources>

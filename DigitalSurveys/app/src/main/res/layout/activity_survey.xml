@@ -59,7 +59,8 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="25dp"
+            android:layout_marginTop="30dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -69,7 +70,7 @@
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
                 android:textColor="@android:color/holo_blue_dark"
-                android:layout_marginRight="12dp"/>
+                android:layout_marginRight="24dp"/>
 
             <RadioGroup
                 android:id="@+id/shop_nature"
@@ -100,7 +101,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="25dp"
             android:layout_marginLeft="-3dp">
 
             <EditText
@@ -117,7 +118,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="25dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -127,7 +128,7 @@
                 android:gravity="center_vertical"
                 android:layout_gravity="center_vertical"
                 android:textColor="@android:color/holo_blue_dark"
-                android:layout_marginRight="50dp"/>
+                android:layout_marginRight="60dp"/>
 
             <RadioGroup
                 android:id="@+id/shop_status"
@@ -165,7 +166,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="20dp">
+            android:paddingBottom="25dp">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -185,7 +186,7 @@
                     android:id="@+id/coordinates"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Latitude, Longitude"
+                    android:text="fetching coordinates..."
                     android:textColor="@android:color/black"
                     android:textSize="@dimen/form_text_size"
                     android:gravity="center"
@@ -210,7 +211,7 @@
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="20dp">
+            android:paddingBottom="25dp">
 
             <TextView
                 android:layout_width="wrap_content"

@@ -1,18 +1,23 @@
 package com.digitalsurveys.mohammadfaizan.digitalsurveys.Activities;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -25,24 +30,29 @@ import android.widget.Toast;
 import com.digitalsurveys.mohammadfaizan.digitalsurveys.Database.DatabaseHandler;
 import com.digitalsurveys.mohammadfaizan.digitalsurveys.HelperClasses.DatabaseExporter;
 import com.digitalsurveys.mohammadfaizan.digitalsurveys.HelperClasses.Logging;
-import com.digitalsurveys.mohammadfaizan.digitalsurveys.Models.Outlet;
 import com.digitalsurveys.mohammadfaizan.digitalsurveys.HelperClasses.PreferencesManager;
+import com.digitalsurveys.mohammadfaizan.digitalsurveys.Models.Outlet;
 import com.digitalsurveys.mohammadfaizan.digitalsurveys.R;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
-public class SurveyActivity extends AppCompatActivity {
+public class SurveyActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener {
 
-    SharedPreferences sharedPreference;
-    public static final String SHAREDPREF = "SHAREDPREF";
     TextView welcome_user, reference_number, date_time, coordinates, image_count;
     RadioGroup shop_nature, shop_status;
     EditText shop_number;
     Button save_outlet, see_my_location, camera;
-    String username, ref_no, date_time_string, latitude = "24.242424", longitude = "54.43434", imageLocation;
+    String username, ref_no, date_time_string, imageLocation;
     int imageCount = 0;
     Logging logging;
     PreferencesManager preferencesManager;
@@ -55,6 +65,12 @@ public class SurveyActivity extends AppCompatActivity {
     // empty variable to hold our image Uri once we store it
     private Uri imageUri;
 
+    //Define a request code to send to Google Play services
+    private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    private GoogleApiClient mGoogleApiClient;
+    private LocationRequest mLocationRequest;
+    private double currentLatitude;
+    private double currentLongitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,17 +78,30 @@ public class SurveyActivity extends AppCompatActivity {
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_survey);
 
-        try{
+        try {
             attachControls();
             setControlValues();
             attachListeners();
             logging = new Logging(true);
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    // The next two lines tell the new client that “this” current class will handle connection stuff
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                            //fourth line adds the LocationServices API endpoint from GooglePlayServices
+                    .addApi(LocationServices.API)
+                    .build();
+
+            // Create the LocationRequest object
+            mLocationRequest = LocationRequest.create()
+                    .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                    .setInterval(10 * 1000)        // 10 seconds, in milliseconds
+                    .setFastestInterval(1 * 1000); // 1 second, in milliseconds
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void attachControls(){
+    public void attachControls() {
         try {
             welcome_user = (TextView) findViewById(R.id.welcome_user);
             reference_number = (TextView) findViewById(R.id.reference_number);
@@ -90,12 +119,22 @@ public class SurveyActivity extends AppCompatActivity {
         }
     }
 
-    public void attachListeners(){
+    public void attachListeners() {
         save_outlet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
-                    saveOutletData();
+                    databaseHandler = new DatabaseHandler(SurveyActivity.this);
+                    long value = databaseHandler.getSingleOutlet(Long.valueOf(ref_no), getShopNumber());
+                    if (value != 0) {
+                        shop_number.setError("Already Exists");
+                    } else if (getShopNumber() == 0) {
+                        shop_number.setError("Required");
+                    } else if(imageCount == 0){
+                        Toast.makeText(SurveyActivity.this, "You need to take at least one picture", Toast.LENGTH_LONG).show();
+                    } else {
+                        showConfirmationDialog();
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -107,6 +146,8 @@ public class SurveyActivity extends AppCompatActivity {
             public void onClick(View v) {
                 try {
                     Intent intent = new Intent(SurveyActivity.this, MapActivity.class);
+                    intent.putExtra("latitude", currentLatitude);
+                    intent.putExtra("longitude", currentLongitude);
                     startActivity(intent);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -118,7 +159,7 @@ public class SurveyActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 try {
-                    if(getShopNumber() != 0) {
+                    if (getShopNumber() != 0) {
                         if (imageCount < 10) {
                             captureImage();
                         } else {
@@ -136,7 +177,7 @@ public class SurveyActivity extends AppCompatActivity {
         });
     }
 
-    public void setControlValues(){
+    public void setControlValues() {
         try {
             preferencesManager = new PreferencesManager(getApplicationContext());
 
@@ -147,28 +188,27 @@ public class SurveyActivity extends AppCompatActivity {
             welcome_user.setText("Welcome, " + username);
             reference_number.setText("Reference Number: " + ref_no);
             date_time.setText(date_time_string);
-            coordinates.setText("fetching coordinates...");
-            image_count.setText("Image Count: "+imageCount);
+            image_count.setText("Image Count: " + imageCount);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public String getDateTimeString(){
+    public String getDateTimeString() {
         DateFormat df = new SimpleDateFormat("HH:mm:ss");
         DateFormat dftwo = new SimpleDateFormat("dd-MM-yyyy");
         String time = df.format(Calendar.getInstance().getTime());
         String date = dftwo.format(Calendar.getInstance().getTime());
 
-        return date+"  "+time;
+        return date + "  " + time;
     }
 
-    public String getRadioValue(RadioGroup radioGroup){
+    public String getRadioValue(RadioGroup radioGroup) {
         String returnValue = null;
         try {
-            for(int i=0; i<radioGroup.getChildCount(); i++){
+            for (int i = 0; i < radioGroup.getChildCount(); i++) {
                 RadioButton radioButton = (RadioButton) radioGroup.getChildAt(i);
-                if(radioButton.isChecked()){
+                if (radioButton.isChecked()) {
                     returnValue = radioButton.getText().toString();
                     break;
                 }
@@ -181,11 +221,11 @@ public class SurveyActivity extends AppCompatActivity {
         return returnValue;
     }
 
-    public long getShopNumber(){
+    public long getShopNumber() {
         long finalValue = 0;
         try {
             String value = shop_number.getText().toString();
-            if(value.length() > 0 || value.equalsIgnoreCase(" ")){
+            if (value.length() > 0 || value.equalsIgnoreCase(" ")) {
                 finalValue = Long.valueOf(value);
             }
         } catch (Exception e) {
@@ -194,40 +234,31 @@ public class SurveyActivity extends AppCompatActivity {
         return finalValue;
     }
 
-    public void saveOutletData(){
+    public void saveOutletData() {
         try {
             logging.log(getRadioValue(shop_nature));
             databaseHandler = new DatabaseHandler(SurveyActivity.this);
-            long value = databaseHandler.getSingleOutlet(Long.valueOf(ref_no), getShopNumber());
-            if(value != 0){
-                shop_number.setError("Already Exists");
-            } else if (getShopNumber() == 0){
-                shop_number.setError("Required");
-            }
-            else {
-                databaseHandler = new DatabaseHandler(SurveyActivity.this);
-                databaseHandler.addOutlet(new Outlet(
-                        username
-                        , Long.valueOf(ref_no)
-                        , date_time_string
-                        , getRadioValue(shop_nature)
-                        , getShopNumber()
-                        , getRadioValue(shop_status)
-                        , latitude
-                        , longitude
-                        , getDateTimeString()
-                        , imageCount
-                        , imageLocation
-                ));
-                databaseHandler.printAllOutlets();
 
-                DatabaseExporter databaseExporter = new DatabaseExporter(getApplicationContext());
-                databaseExporter.fireDatabaseExport();
+            databaseHandler = new DatabaseHandler(SurveyActivity.this);
+            databaseHandler.addOutlet(new Outlet(
+                    username
+                    , Long.valueOf(ref_no)
+                    , date_time_string
+                    , getRadioValue(shop_nature)
+                    , getShopNumber()
+                    , getRadioValue(shop_status)
+                    , String.valueOf(currentLatitude)
+                    , String.valueOf(currentLongitude)
+                    , getDateTimeString()
+                    , imageCount
+                    , imageLocation
+            ));
+            databaseHandler.printAllOutlets();
 
-                Intent intent = new Intent(SurveyActivity.this, SurveyActivity.class);
-                startActivity(intent);
-                finish();
-            }
+            DatabaseExporter databaseExporter = new DatabaseExporter(getApplicationContext());
+            databaseExporter.fireDatabaseExport();
+
+            Toast.makeText(SurveyActivity.this, "Data saved successfully!", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -239,18 +270,47 @@ public class SurveyActivity extends AppCompatActivity {
         showExitDialog();
     }
 
-    public void showExitDialog() {
+    public void showConfirmationDialog() {
         try {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-            alertDialogBuilder.setMessage("Are you sure you want to logout?");
+            alertDialogBuilder.setMessage("Are you sure you save this data?");
             alertDialogBuilder.setCancelable(false);
 
             alertDialogBuilder.setNeutralButton(R.string.ref_dialog_ok,
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface arg0, int arg1) {
-                            Intent intent = new Intent(SurveyActivity.this, MainActivity.class);
+                            saveOutletData();
+                            Intent intent = new Intent(SurveyActivity.this, SurveyActivity.class);
                             startActivity(intent);
+                            finish();
+                        }
+                    });
+            alertDialogBuilder.setNegativeButton(R.string.ref_dialog_cancel,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+
+            AlertDialog alertDialog = alertDialogBuilder.create();
+            alertDialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void showExitDialog() {
+        try {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            alertDialogBuilder.setMessage("Are you sure you want to exit the application?");
+            alertDialogBuilder.setCancelable(false);
+
+            alertDialogBuilder.setNeutralButton(R.string.ref_dialog_ok,
+                    new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface arg0, int arg1) {
                             finish();
                         }
                     });
@@ -276,8 +336,8 @@ public class SurveyActivity extends AppCompatActivity {
             intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
             // create a new temp file called pic.jpg in the "pictures" storage area of the phone
-            File photo = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/DigitalSurveys/", ref_no+"_"+getShopNumber()+"_"+getRadioValue(shop_status)+"_"+imageCount+"_image.jpg");
-            imageLocation = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/DigitalSurveys/";
+            File photo = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/", ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg");
+            imageLocation = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/";
             // take the return data and store it in the temp file "pic.jpg"
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
             //System.out.println("PATH:" + photo.getPath());
@@ -324,7 +384,7 @@ public class SurveyActivity extends AppCompatActivity {
                             //Toast.makeText(getActivity().getApplicationContext(), selectedImage.toString() + " has been saved", Toast.LENGTH_LONG).show();
                             Toast.makeText(SurveyActivity.this, "Image has been saved", Toast.LENGTH_LONG).show();
                             imageCount++;
-                            image_count.setText("Image Count: "+imageCount);
+                            image_count.setText("Image Count: " + imageCount);
                             //shop_owner_pic.setBackgroundResource(R.drawable.journey_plan_with_blank);
                             //shop_owner_pic.setImageBitmap(finalBitmap);
 
@@ -342,4 +402,115 @@ public class SurveyActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        //Now lets connect to the API
+        try {
+            mGoogleApiClient.connect();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.v(this.getClass().getSimpleName(), "onPause()");
+        try {
+            //Disconnect from API onPause()
+            if (mGoogleApiClient.isConnected()) {
+                LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+                mGoogleApiClient.disconnect();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        try {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+            if (location == null) {
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+
+            } else {
+                //If everything went fine lets get latitude and longitude
+                currentLatitude = location.getLatitude();
+                currentLongitude = location.getLongitude();
+
+//                Toast.makeText(this, currentLatitude + " WORKS " + currentLongitude + "", Toast.LENGTH_LONG).show();
+                logging.log("onConnected: "+currentLatitude + " WORKS " + currentLongitude);
+                coordinates.setText(currentLatitude + ", " + currentLongitude);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        try {
+            currentLatitude = location.getLatitude();
+            currentLongitude = location.getLongitude();
+
+            logging.log("onLocationChanged: "+currentLatitude + " WORKS " + currentLongitude);
+            coordinates.setText(currentLatitude + ", " + currentLongitude);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+/*
+             * Google Play services can resolve some errors it detects.
+             * If the error has a resolution, try sending an Intent to
+             * start a Google Play services activity that can resolve
+             * error.
+             */
+        try {
+            if (connectionResult.hasResolution()) {
+                try {
+                    // Start an Activity that tries to resolve the error
+                    connectionResult.startResolutionForResult(this, CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                    /*
+                     * Thrown if Google Play services canceled the original
+                     * PendingIntent
+                     */
+                } catch (IntentSender.SendIntentException e) {
+                    // Log the error
+                    e.printStackTrace();
+                }
+            } else {
+                /*
+                 * If no resolution is available, display a dialog to the
+                 * user with the error.
+                 */
+                Log.e("Error", "Location services connection failed with code " + connectionResult.getErrorCode());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
