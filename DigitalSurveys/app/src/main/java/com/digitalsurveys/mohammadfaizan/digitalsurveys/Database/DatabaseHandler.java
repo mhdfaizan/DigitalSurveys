@@ -76,7 +76,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             db.execSQL(CREATE_OUTLETS_TABLE);
 
             db.execSQL("INSERT INTO "+TABLE_USERS+" VALUES('admin', '123');");
-            db.execSQL("INSERT INTO "+TABLE_USERS+" VALUES('test', 'abc');");
+            db.execSQL("INSERT INTO " + TABLE_USERS + " VALUES('test', 'abc');");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -188,6 +188,29 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         return cursor;
     }
 
+    // Getting all outlets for reference number
+    public Cursor getAllOutletsForReferenceNo(long ref_no) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        System.out.println("SELECT * FROM "+TABLE_OUTLETS + " WHERE "+REF_NO+" = "+ ref_no);
+        Cursor cursor = null;
+        try {
+            cursor = db.rawQuery("SELECT * FROM " + TABLE_OUTLETS + " WHERE " + REF_NO + " = " + ref_no, null);
+        /*if (cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            String[] mcolumnNames = cursor.getColumnNames();
+            while (!cursor.isAfterLast()) {
+                for (int i = 0; i < mcolumnNames.length; i++) {
+                    System.out.println(mcolumnNames[i] + " - " + cursor.getString(cursor.getColumnIndex(mcolumnNames[i])));
+                }
+                cursor.moveToNext();
+            }
+        }*/
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return cursor;
+    }
+
     // Getting single outlet
     public long getSingleOutlet(long ref_no, long shop_number) {
         long value = 0;
@@ -207,6 +230,24 @@ public class DatabaseHandler extends SQLiteOpenHelper {
             }
         }
         return value;
+    }
+
+    // Getting all reference numbers
+    public Cursor getAllReferenceNo() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        System.out.println("SELECT DISTINCT "+REF_NO+" FROM "+TABLE_OUTLETS);
+        Cursor cursor = db.rawQuery("SELECT DISTINCT "+REF_NO+" FROM "+TABLE_OUTLETS, null);
+        if (cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            String[] mcolumnNames = cursor.getColumnNames();
+            while (!cursor.isAfterLast()) {
+                for (int i = 0; i < mcolumnNames.length; i++) {
+                    System.out.println(mcolumnNames[i] + " - " + cursor.getString(cursor.getColumnIndex(mcolumnNames[i])));
+                }
+                cursor.moveToNext();
+            }
+        }
+        return cursor;
     }
 
 }

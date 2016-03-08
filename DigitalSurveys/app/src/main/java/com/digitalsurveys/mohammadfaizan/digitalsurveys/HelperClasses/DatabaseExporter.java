@@ -25,36 +25,62 @@ public class DatabaseExporter {
 
     public void fireDatabaseExport() {
         try {
-            File dbFile = context.getDatabasePath(DatabaseHandler.DATABASE_NAME);
-            File exportDir = new File(Environment.getExternalStoragePublicDirectory("Download") + "/DigitalSurveys/", "");
-            if (!exportDir.exists()) {
-                System.out.println("" + exportDir);
-                exportDir.mkdirs();
-            }
-            File outletFile = new File(exportDir, "OutletsData.csv");
-            if(outletFile.exists()){
-                outletFile.delete();
-                File newOutletFile = new File(exportDir, "OutletsData.csv");
-                System.out.println("Old outlet file deleted and new created!");
-                exportData(newOutletFile);
-            } else {
-                System.out.println("Already new!");
-                exportData(outletFile);
-            }
+            databaseHandler = new DatabaseHandler(context);
+            Cursor cursor = databaseHandler.getAllReferenceNo();
+            if(cursor.getCount() > 0){
+                cursor.moveToFirst();
+                while (!cursor.isAfterLast()){
+                    File dbFile = context.getDatabasePath(DatabaseHandler.DATABASE_NAME);
+                    File exportDir = new File(Environment.getExternalStoragePublicDirectory("Download") + "/DigitalSurveys/"+cursor.getString(0), "");
+                    if (!exportDir.exists()) {
+                        System.out.println("" + exportDir);
+                        exportDir.mkdirs();
+                    }
+                    File outletFile = new File(exportDir, "OutletsData.csv");
+                    if(outletFile.exists()){
+                        outletFile.delete();
+                        File newOutletFile = new File(exportDir, "OutletsData.csv");
+                        System.out.println("Old outlet file deleted and new created!");
+                        exportData(newOutletFile, cursor.getLong(0));
+                    } else {
+                        System.out.println("Already new!");
+                        exportData(outletFile, cursor.getLong(0));
+                    }
 
-            System.out.println("ENVPATH: " + Environment.getExternalStoragePublicDirectory("Download"));
+                    System.out.println("ENVPATH: " + Environment.getExternalStoragePublicDirectory("Download"));
+                    cursor.moveToNext();
+                }
+            }
+//            File dbFile = context.getDatabasePath(DatabaseHandler.DATABASE_NAME);
+//            File exportDir = new File(Environment.getExternalStoragePublicDirectory("Download") + "/DigitalSurveys/", "");
+//            if (!exportDir.exists()) {
+//                System.out.println("" + exportDir);
+//                exportDir.mkdirs();
+//            }
+//            File outletFile = new File(exportDir, "OutletsData.csv");
+//            if(outletFile.exists()){
+//                outletFile.delete();
+//                File newOutletFile = new File(exportDir, "OutletsData.csv");
+//                System.out.println("Old outlet file deleted and new created!");
+////                exportData(newOutletFile);
+//            } else {
+//                System.out.println("Already new!");
+////                exportData(outletFile);
+//            }
+//
+//            System.out.println("ENVPATH: " + Environment.getExternalStoragePublicDirectory("Download"));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void exportData(File file) {
+    public void exportData(File file, long ref_no) {
         try {
             file.createNewFile();
             CSVWriter csvWriteOutlet = new CSVWriter(new FileWriter(file));
             databaseHandler = new DatabaseHandler(context);
 
-            Cursor cursor = databaseHandler.getAllOutlets();
+            Cursor cursor = databaseHandler.getAllOutletsForReferenceNo(ref_no);
 
             ArrayList<String> list = new ArrayList<>();
 

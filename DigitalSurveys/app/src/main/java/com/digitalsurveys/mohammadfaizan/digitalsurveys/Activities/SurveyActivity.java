@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
@@ -48,7 +49,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
-    TextView welcome_user, reference_number, date_time, coordinates, image_count;
+    TextView welcome_user, reference_number, number_of_outlets, date_time, coordinates, image_count;
     RadioGroup shop_nature, shop_status;
     EditText shop_number;
     Button save_outlet, see_my_location, camera;
@@ -57,7 +58,6 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     Logging logging;
     PreferencesManager preferencesManager;
     DatabaseHandler databaseHandler;
-
     Bitmap finalBitmap;
 
     // tells us which camera to take a picture from
@@ -78,6 +78,10 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_survey);
 
+//        FontChangeCrawler fontChanger = new FontChangeCrawler(getAssets(), "menlo.ttf");
+//        fontChanger.replaceFonts((ViewGroup) this.findViewById(R.id.holder));
+
+
         try {
             attachControls();
             setControlValues();
@@ -96,6 +100,11 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                     .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                     .setInterval(10 * 1000)        // 10 seconds, in milliseconds
                     .setFastestInterval(1 * 1000); // 1 second, in milliseconds
+
+//            Typeface myTypeface = Typeface.createFromAsset(getAssets(), "ubuntu.ttf");
+//            welcome_user.setTypeface(myTypeface);
+//            date_time.setTypeface(myTypeface);
+//            save_outlet.setTypeface(myTypeface);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -105,6 +114,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         try {
             welcome_user = (TextView) findViewById(R.id.welcome_user);
             reference_number = (TextView) findViewById(R.id.reference_number);
+            number_of_outlets = (TextView) findViewById(R.id.number_of_outlets);
             date_time = (TextView) findViewById(R.id.date_time);
             shop_nature = (RadioGroup) findViewById(R.id.shop_nature);
             shop_status = (RadioGroup) findViewById(R.id.shop_status);
@@ -187,11 +197,27 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
 
             welcome_user.setText("Welcome, " + username);
             reference_number.setText("Reference Number: " + ref_no);
+            number_of_outlets.setText("Number of Outlets: " + getNumberOfOutlets(Long.valueOf(ref_no)));
             date_time.setText(date_time_string);
             image_count.setText("Image Count: " + imageCount);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private int getNumberOfOutlets(long ref_no) {
+        int count = 0;
+        try {
+            databaseHandler = new DatabaseHandler(SurveyActivity.this);
+            Cursor cursor = databaseHandler.getAllOutletsForReferenceNo(ref_no);
+            if(cursor != null){
+                count = cursor.getCount();
+            }
+            //logging.log("count: "+count);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count;
     }
 
     public String getDateTimeString() {
@@ -237,7 +263,6 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     public void saveOutletData() {
         try {
             logging.log(getRadioValue(shop_nature));
-            databaseHandler = new DatabaseHandler(SurveyActivity.this);
 
             databaseHandler = new DatabaseHandler(SurveyActivity.this);
             databaseHandler.addOutlet(new Outlet(
@@ -304,13 +329,15 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     public void showExitDialog() {
         try {
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-            alertDialogBuilder.setMessage("Are you sure you want to exit the application?");
+            alertDialogBuilder.setMessage("Are you sure you want to logout?");
             alertDialogBuilder.setCancelable(false);
 
             alertDialogBuilder.setNeutralButton(R.string.ref_dialog_ok,
                     new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface arg0, int arg1) {
+                            Intent intent = new Intent(SurveyActivity.this, MainActivity.class);
+                            startActivity(intent);
                             finish();
                         }
                     });
@@ -336,8 +363,8 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
             intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
             // create a new temp file called pic.jpg in the "pictures" storage area of the phone
-            File photo = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/", ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg");
-            imageLocation = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/";
+            File photo = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/"+ref_no, ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg");
+            imageLocation = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/"+ref_no;
             // take the return data and store it in the temp file "pic.jpg"
             intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
             //System.out.println("PATH:" + photo.getPath());
