@@ -41,9 +41,17 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 public class SurveyActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -63,7 +71,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     // tells us which camera to take a picture from
     private static int TAKE_PICTURE = 1;
     // empty variable to hold our image Uri once we store it
-    private Uri imageUri;
+    public Uri imageUri;
 
     //Define a request code to send to Google Play services
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
@@ -80,8 +88,6 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
 
 //        FontChangeCrawler fontChanger = new FontChangeCrawler(getAssets(), "menlo.ttf");
 //        fontChanger.replaceFonts((ViewGroup) this.findViewById(R.id.holder));
-
-
         try {
             attachControls();
             setControlValues();
@@ -359,21 +365,33 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     public void captureImage() {
         try {
             // tell the phone we want to use the camera
-            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
             // create a new temp file called pic.jpg in the "pictures" storage area of the phone
-            File photo = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/"+ref_no, ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg");
-            imageLocation = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/DigitalSurveys/"+ref_no;
+            File photo = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no, ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg");
+            File folder = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no);
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            imageLocation = Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no;
+//            imageUriString = String.valueOf(Uri.fromFile(photo));
+
+            // store the temp photo uri so we can find it later
+            imageUri = Uri.fromFile(photo);
+            logging.log("imageUri: " + imageUri.toString());
             // take the return data and store it in the temp file "pic.jpg"
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
+            String manufacturer = android.os.Build.MANUFACTURER.toLowerCase(Locale.ENGLISH);
+            if(!(manufacturer.contains("samsung"))){
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
+            }
+
             //System.out.println("PATH:" + photo.getPath());
 
-            // stor the temp photo uri so we can find it later
-            imageUri = Uri.fromFile(photo);
-
             // start the camera
-            startActivityForResult(intent, TAKE_PICTURE);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivityForResult(intent, TAKE_PICTURE);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -389,32 +407,75 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                 case 1:
                     // if the user took a photo and selected the photo to use
                     if (resultCode == Activity.RESULT_OK) {
-                        // get the image uri from earlier
-                        Uri selectedImage = imageUri;
-                        // notify any apps of any changes we make
-                        getContentResolver().notifyChange(selectedImage, null);
-                        // get the imageView we set in our view earlier
-                        //ImageView imageView = (ImageView)findViewById(R.id.image_view_camera);
-                        // create a content resolver object which will allow us to access the image file at the uri above
-                        ContentResolver cr = getContentResolver();
-                        // create an empty bitmap object
+                        Uri selectedImage;
                         Bitmap bitmap;
+
+                        String manufacturer = android.os.Build.MANUFACTURER.toLowerCase(Locale.ENGLISH);
+                        logging.log("manufacturer: "+manufacturer);
+                        if((manufacturer.contains("samsung"))){
+                            bitmap = (Bitmap) data.getExtras().get("data");
+                            selectedImage = data.getData();
+                            logging.log("selectedImage: " + selectedImage);
+                            String[] filePathColumn = {MediaStore.Images.Media.DATA};
+
+                            Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
+                            cursor.moveToFirst();
+
+                            int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                            //file path of captured image
+                            String filePath = cursor.getString(columnIndex);
+                            //file path of captured image
+                            File f = new File(filePath);
+                            String filename = ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg";
+
+                            logging.log("Your Path:" + filePath);
+                            logging.log("Your Filename:" + filename);
+                            cursor.close();
+
+                            saveFile(filename, filePath);
+                        } else {
+                            selectedImage = imageUri;
+                            logging.log("selectedImage: " + selectedImage);
+
+                            ContentResolver cr = getContentResolver();
+
+                            bitmap = android.provider.MediaStore.Images.Media.getBitmap(cr, selectedImage);
+
+                            imageCount++;
+                            changeText("Image Count: " + imageCount);
+                            logging.log("Image Count: " + image_count.getText());
+                        }
+                        // set the bitmap to the image view
+                        //shop_image.setImageBitmap(bitmap);
+                        finalBitmap = bitmap;
+                        logging.log("finalBitmap: "+finalBitmap);
                         try {
+                            /*// create an empty bitmap object
+                            Bitmap bitmap = null;
+                            bitmap = (Bitmap) data.getExtras().get("data");
+                            // get the image uri from earlier
+//                        file:///storage/emulated/0/DigitalSurveys/123/123_3_Open_1_image.jpg
+//                        Uri selectedImage = Uri.parse("file:///"+Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no+"/"+ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg");
+                            Uri selectedImage = getImageUri(SurveyActivity.this, bitmap);
+                            logging.log("selectedImage: " + selectedImage);
+                            getContentResolver().notifyChange(selectedImage, null);
+                            // create a content resolver object which will allow us to access the image file at the uri above
+                            ContentResolver cr = getContentResolver();
                             // get the bitmap from the image uri using the content resolver api to get the image
                             bitmap = android.provider.MediaStore.Images.Media.getBitmap(cr, selectedImage);
-                            // set the bitmap to the image view
-                            //shop_image.setImageBitmap(bitmap);
-                            finalBitmap = bitmap;
-                            //System.out.println("IMAGE PATH: "+imageUri.getPath());
-                            //imageLocation = imageUri.getPath();
-                            // notify the user
-                            //Toast.makeText(getActivity().getApplicationContext(), selectedImage.toString() + " has been saved", Toast.LENGTH_LONG).show();
+                            if(bitmap != null){
+                                *//*String inputPath = selectedImage.getPath()+"/";
+                                String inputFile = ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg";
+                                String outputPath = Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no+"/";
+                                logging.log("inputPath: "+inputPath);
+                                logging.log("inputFile: "+inputFile);
+                                logging.log("outputPath: "+outputPath);
+                                moveFile(inputPath, inputFile, outputPath);*//*
+                                imageCount++;
+                                image_count.setText("Image Count: " + imageCount);
+                                logging.log("Image Count: " + imageCount);
+                            }*/
                             Toast.makeText(SurveyActivity.this, "Image has been saved", Toast.LENGTH_LONG).show();
-                            imageCount++;
-                            image_count.setText("Image Count: " + imageCount);
-                            //shop_owner_pic.setBackgroundResource(R.drawable.journey_plan_with_blank);
-                            //shop_owner_pic.setImageBitmap(finalBitmap);
-
                         } catch (Exception e) {
                             // notify the user
                             Toast.makeText(SurveyActivity.this, "Failed to save image", Toast.LENGTH_LONG).show();
@@ -422,12 +483,42 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                     }
 
                     if (resultCode == Activity.RESULT_CANCELED) {
-                        //takePhoto(view, "", "");
+                        return;
                     }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void saveFile(String name, String path) {
+        File direct = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no);
+        File file = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no+"/"+name);
+
+        if(!direct.exists()) {
+            direct.mkdirs();
+        }
+
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+                FileChannel src = new FileInputStream(path).getChannel();
+                FileChannel dst = new FileOutputStream(file).getChannel();
+                dst.transferFrom(src, 0, src.size());
+                src.close();
+                dst.close();
+                imageCount++;
+                changeText("Image Count: " + imageCount);
+                logging.log("Image Count: " + image_count.getText());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void changeText(String mText)
+    {
+        image_count.setText(mText);
     }
 
     @Override
@@ -539,5 +630,48 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         }
     }
 
+    private void moveFile(String inputPath, String inputFile, String outputPath) {
 
+        InputStream in = null;
+        OutputStream out = null;
+        try {
+
+            //create output directory if it doesn't exist
+            File dir = new File (outputPath);
+            if (!dir.exists())
+            {
+                dir.mkdirs();
+            }
+
+
+            in = new FileInputStream(inputPath + inputFile);
+            out = new FileOutputStream(outputPath + inputFile);
+
+            logging.log("in : "+in.toString());
+            logging.log("out : "+out.toString());
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+            in.close();
+            in = null;
+
+            // write the output file
+            out.flush();
+            out.close();
+            out = null;
+
+            // delete the original file
+            new File(inputPath + inputFile).delete();
+        }
+
+        catch (FileNotFoundException fnfe1) {
+            Log.e("tag", fnfe1.getMessage());
+        }
+        catch (Exception e) {
+            Log.e("tag", e.getMessage());
+        }
+
+    }
 }

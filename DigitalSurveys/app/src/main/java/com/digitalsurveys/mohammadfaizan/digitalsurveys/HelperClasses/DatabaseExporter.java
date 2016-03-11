@@ -31,7 +31,7 @@ public class DatabaseExporter {
                 cursor.moveToFirst();
                 while (!cursor.isAfterLast()){
                     File dbFile = context.getDatabasePath(DatabaseHandler.DATABASE_NAME);
-                    File exportDir = new File(Environment.getExternalStoragePublicDirectory("Download") + "/DigitalSurveys/"+cursor.getString(0), "");
+                    File exportDir = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+cursor.getString(0), "");
                     if (!exportDir.exists()) {
                         System.out.println("" + exportDir);
                         exportDir.mkdirs();
@@ -47,7 +47,7 @@ public class DatabaseExporter {
                         exportData(outletFile, cursor.getLong(0));
                     }
 
-                    System.out.println("ENVPATH: " + Environment.getExternalStoragePublicDirectory("Download"));
+                    System.out.println("ENVPATH: " + Environment.getExternalStorageDirectory());
                     cursor.moveToNext();
                 }
             }
