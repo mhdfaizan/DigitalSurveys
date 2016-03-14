@@ -441,6 +441,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
 
                             bitmap = android.provider.MediaStore.Images.Media.getBitmap(cr, selectedImage);
 
+                            imageCount = Integer.valueOf(image_count.getText().toString().substring(13, 14));
                             imageCount++;
                             changeText("Image Count: " + imageCount);
                             logging.log("Image Count: " + image_count.getText());
@@ -507,6 +508,8 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                 dst.transferFrom(src, 0, src.size());
                 src.close();
                 dst.close();
+
+                imageCount = Integer.valueOf(image_count.getText().toString().substring(13,14));
                 imageCount++;
                 changeText("Image Count: " + imageCount);
                 logging.log("Image Count: " + image_count.getText());
@@ -518,7 +521,8 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
 
     public void changeText(String mText)
     {
-        image_count.setText(mText);
+        TextView textView = (TextView) findViewById(R.id.image_count);
+        textView.setText(mText);
     }
 
     @Override
