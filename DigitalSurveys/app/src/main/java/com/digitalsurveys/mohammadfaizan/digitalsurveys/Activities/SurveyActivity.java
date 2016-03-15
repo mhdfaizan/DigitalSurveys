@@ -42,11 +42,8 @@ import com.google.android.gms.location.LocationServices;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.channels.FileChannel;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -148,6 +145,10 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                         shop_number.setError("Required");
                     } else if(imageCount == 0){
                         Toast.makeText(SurveyActivity.this, "You need to take at least one picture", Toast.LENGTH_LONG).show();
+                    } else if(coordinates.getText().toString().contains("fetching")){
+                        Toast.makeText(SurveyActivity.this, "You need to wait until coordinates are fetched", Toast.LENGTH_LONG).show();
+                    } else if(currentLatitude == 0 || currentLongitude == 0){
+                        Toast.makeText(SurveyActivity.this, "You need to wait until coordinates are fetched", Toast.LENGTH_LONG).show();
                     } else {
                         showConfirmationDialog();
                     }
@@ -575,7 +576,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                 currentLongitude = location.getLongitude();
 
 //                Toast.makeText(this, currentLatitude + " WORKS " + currentLongitude + "", Toast.LENGTH_LONG).show();
-                logging.log("onConnected: "+currentLatitude + " WORKS " + currentLongitude);
+                logging.log("onConnected: " + currentLatitude + " WORKS " + currentLongitude);
                 coordinates.setText(currentLatitude + ", " + currentLongitude);
             }
         } catch (Exception e) {
@@ -632,50 +633,5 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void moveFile(String inputPath, String inputFile, String outputPath) {
-
-        InputStream in = null;
-        OutputStream out = null;
-        try {
-
-            //create output directory if it doesn't exist
-            File dir = new File (outputPath);
-            if (!dir.exists())
-            {
-                dir.mkdirs();
-            }
-
-
-            in = new FileInputStream(inputPath + inputFile);
-            out = new FileOutputStream(outputPath + inputFile);
-
-            logging.log("in : "+in.toString());
-            logging.log("out : "+out.toString());
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
-            }
-            in.close();
-            in = null;
-
-            // write the output file
-            out.flush();
-            out.close();
-            out = null;
-
-            // delete the original file
-            new File(inputPath + inputFile).delete();
-        }
-
-        catch (FileNotFoundException fnfe1) {
-            Log.e("tag", fnfe1.getMessage());
-        }
-        catch (Exception e) {
-            Log.e("tag", e.getMessage());
-        }
-
     }
 }
