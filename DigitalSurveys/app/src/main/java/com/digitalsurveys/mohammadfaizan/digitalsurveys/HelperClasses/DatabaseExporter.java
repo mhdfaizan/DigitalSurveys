@@ -31,7 +31,9 @@ public class DatabaseExporter {
                 cursor.moveToFirst();
                 while (!cursor.isAfterLast()){
                     File dbFile = context.getDatabasePath(DatabaseHandler.DATABASE_NAME);
-                    File exportDir = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+cursor.getString(0), "");
+                    System.out.println("cursor.getLong(0): "+cursor.getLong(0));
+                    System.out.println("cursor.getString(0): "+ cursor.getString(0));
+                    File exportDir = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+cursor.getString(0));
                     if (!exportDir.exists()) {
                         System.out.println("" + exportDir);
                         exportDir.mkdirs();

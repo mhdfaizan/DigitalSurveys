@@ -274,7 +274,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
             databaseHandler = new DatabaseHandler(SurveyActivity.this);
             databaseHandler.addOutlet(new Outlet(
                     username
-                    , Long.valueOf(ref_no)
+                    , ref_no
                     , date_time_string
                     , getRadioValue(shop_nature)
                     , getShopNumber()

@@ -7,7 +7,7 @@ public class Outlet {
 
     long id;
     String username;
-    long ref_number;
+    String ref_number;
     String ref_number_time_date;
     String shop_nature;
     long shop_number;
@@ -18,7 +18,7 @@ public class Outlet {
     int image_count;
     String image_location;
 
-    public Outlet(String username, long ref_number, String ref_number_time_date, String shop_nature, long shop_number, String shop_status, String latitude, String longitude, String shop_save_time_date, int image_count, String image_location) {
+    public Outlet(String username, String ref_number, String ref_number_time_date, String shop_nature, long shop_number, String shop_status, String latitude, String longitude, String shop_save_time_date, int image_count, String image_location) {
         this.username = username;
         this.ref_number = ref_number;
         this.ref_number_time_date = ref_number_time_date;
@@ -48,11 +48,11 @@ public class Outlet {
         this.username = username;
     }
 
-    public long getRef_number() {
+    public String getRef_number() {
         return ref_number;
     }
 
-    public void setRef_number(long ref_number) {
+    public void setRef_number(String ref_number) {
         this.ref_number = ref_number;
     }
 
