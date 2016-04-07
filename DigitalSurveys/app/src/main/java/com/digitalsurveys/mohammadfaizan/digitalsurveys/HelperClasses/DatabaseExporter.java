@@ -91,7 +91,7 @@ public class DatabaseExporter {
             list.add("REf NUMBER");
             list.add("REF NUMBER DATE AND TIME");
             list.add("SHOP NATURE");
-            list.add("SHOP NUMBER");
+            list.add("PAGE NUMBER");
             list.add("SHOP STATUS");
             list.add("LATITUDE");
             list.add("LONGITUDE");

@@ -119,7 +119,7 @@
                 android:id="@+id/shop_number"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Shop Number"
+                android:hint="Page Number"
                 android:inputType="numberDecimal"
                 android:textSize="@dimen/form_text_size"/>
 
