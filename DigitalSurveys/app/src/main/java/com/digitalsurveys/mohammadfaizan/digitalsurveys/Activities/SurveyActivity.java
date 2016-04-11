@@ -49,6 +49,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class SurveyActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
@@ -76,9 +78,10 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     private LocationRequest mLocationRequest;
     private double currentLatitude;
     private double currentLongitude;
+    private Timer timer = new Timer();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_survey);
@@ -104,12 +107,83 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                     .setInterval(10 * 1000)        // 10 seconds, in milliseconds
                     .setFastestInterval(1 * 1000); // 1 second, in milliseconds
 
+
+//            new Timer().scheduleAtFixedRate(new TimerTask() {
+//                @Override
+//                public void run() {
+//                    try {
+//                        if (ActivityCompat.checkSelfPermission(SurveyActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(SurveyActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                            // TODO: Consider calling
+//                            //    ActivityCompat#requestPermissions
+//                            // here to request the missing permissions, and then overriding
+//                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                            //                                          int[] grantResults)
+//                            // to handle the case where the user grants the permission. See the documentation
+//                            // for ActivityCompat#requestPermissions for more details.
+//                            return;
+//                        }
+//                        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+//                        if(location != null){
+//                            onConnected(savedInstanceState);
+//                        }
+//                    } catch (Exception e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            }, 0, 5000);//put here time 1000 milliseconds=1 second
+            timer.schedule(new MyTimerTask(savedInstanceState), 0,20000);
+
 //            Typeface myTypeface = Typeface.createFromAsset(getAssets(), "ubuntu.ttf");
 //            welcome_user.setTypeface(myTypeface);
 //            date_time.setTypeface(myTypeface);
 //            save_outlet.setTypeface(myTypeface);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private class MyTimerTask extends TimerTask{
+
+        Bundle innerBundle;
+        public MyTimerTask(Bundle bundle) {
+            innerBundle = bundle;
+        }
+
+        @Override
+        public void run() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (ActivityCompat.checkSelfPermission(SurveyActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(SurveyActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            // TODO: Consider calling
+                            //    ActivityCompat#requestPermissions
+                            // here to request the missing permissions, and then overriding
+                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                            //                                          int[] grantResults)
+                            // to handle the case where the user grants the permission. See the documentation
+                            // for ActivityCompat#requestPermissions for more details.
+                            return;
+                        }
+                        Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+
+                        if (location != null) {
+                            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, SurveyActivity.this);
+
+                        } else {
+                            //If everything went fine lets get latitude and longitude
+                            currentLatitude = location.getLatitude();
+                            currentLongitude = location.getLongitude();
+
+//                Toast.makeText(this, currentLatitude + " WORKS " + currentLongitude + "", Toast.LENGTH_LONG).show();
+                            logging.log("onConnected: " + currentLatitude + " WORKS " + currentLongitude);
+                            coordinates.setText(currentLatitude + ", " + currentLongitude);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
     }
 
@@ -143,11 +217,11 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                         shop_number.setError("Already Exists");
                     } else if (getShopNumber() == 0) {
                         shop_number.setError("Required");
-                    } else if(imageCount == 0){
+                    } else if (imageCount == 0) {
                         Toast.makeText(SurveyActivity.this, "You need to take at least one picture", Toast.LENGTH_LONG).show();
-                    } else if(coordinates.getText().toString().contains("fetching")){
+                    } else if (coordinates.getText().toString().contains("fetching")) {
                         Toast.makeText(SurveyActivity.this, "You need to wait until coordinates are fetched", Toast.LENGTH_LONG).show();
-                    } else if(currentLatitude == 0 || currentLongitude == 0){
+                    } else if (currentLatitude == 0 || currentLongitude == 0) {
                         Toast.makeText(SurveyActivity.this, "You need to wait until coordinates are fetched", Toast.LENGTH_LONG).show();
                     } else {
                         showConfirmationDialog();
@@ -217,7 +291,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         try {
             databaseHandler = new DatabaseHandler(SurveyActivity.this);
             Cursor cursor = databaseHandler.getAllOutletsForReferenceNo(ref_no);
-            if(cursor != null){
+            if (cursor != null) {
                 count = cursor.getCount();
             }
             //logging.log("count: "+count);
@@ -370,12 +444,12 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
             intent.putExtra(MediaStore.EXTRA_SCREEN_ORIENTATION, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
             // create a new temp file called pic.jpg in the "pictures" storage area of the phone
-            File photo = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no, ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg");
-            File folder = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no);
+            File photo = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/" + ref_no, ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount + 1) + "_image.jpg");
+            File folder = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/" + ref_no);
             if (!folder.exists()) {
                 folder.mkdirs();
             }
-            imageLocation = Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no;
+            imageLocation = Environment.getExternalStorageDirectory() + "/DigitalSurveys/" + ref_no;
 //            imageUriString = String.valueOf(Uri.fromFile(photo));
 
             // store the temp photo uri so we can find it later
@@ -383,7 +457,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
             logging.log("imageUri: " + imageUri.toString());
             // take the return data and store it in the temp file "pic.jpg"
             String manufacturer = android.os.Build.MANUFACTURER.toLowerCase(Locale.ENGLISH);
-            if(!(manufacturer.contains("samsung"))){
+            if (!(manufacturer.contains("samsung"))) {
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
             }
 
@@ -412,8 +486,8 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                         Bitmap bitmap;
 
                         String manufacturer = android.os.Build.MANUFACTURER.toLowerCase(Locale.ENGLISH);
-                        logging.log("manufacturer: "+manufacturer);
-                        if((manufacturer.contains("samsung"))){
+                        logging.log("manufacturer: " + manufacturer);
+                        if ((manufacturer.contains("samsung"))) {
                             bitmap = (Bitmap) data.getExtras().get("data");
                             selectedImage = data.getData();
                             logging.log("selectedImage: " + selectedImage);
@@ -427,7 +501,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                             String filePath = cursor.getString(columnIndex);
                             //file path of captured image
                             File f = new File(filePath);
-                            String filename = ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount+1) + "_image.jpg";
+                            String filename = ref_no + "_" + getShopNumber() + "_" + getRadioValue(shop_status) + "_" + (imageCount + 1) + "_image.jpg";
 
                             logging.log("Your Path:" + filePath);
                             logging.log("Your Filename:" + filename);
@@ -450,7 +524,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                         // set the bitmap to the image view
                         //shop_image.setImageBitmap(bitmap);
                         finalBitmap = bitmap;
-                        logging.log("finalBitmap: "+finalBitmap);
+                        logging.log("finalBitmap: " + finalBitmap);
                         try {
                             /*// create an empty bitmap object
                             Bitmap bitmap = null;
@@ -494,10 +568,10 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     }
 
     public void saveFile(String name, String path) {
-        File direct = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no);
-        File file = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/"+ref_no+"/"+name);
+        File direct = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/" + ref_no);
+        File file = new File(Environment.getExternalStorageDirectory() + "/DigitalSurveys/" + ref_no + "/" + name);
 
-        if(!direct.exists()) {
+        if (!direct.exists()) {
             direct.mkdirs();
         }
 
@@ -510,7 +584,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
                 src.close();
                 dst.close();
 
-                imageCount = Integer.valueOf(image_count.getText().toString().substring(13,14));
+                imageCount = Integer.valueOf(image_count.getText().toString().substring(13, 14));
                 imageCount++;
                 changeText("Image Count: " + imageCount);
                 logging.log("Image Count: " + image_count.getText());
@@ -520,8 +594,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         }
     }
 
-    public void changeText(String mText)
-    {
+    public void changeText(String mText) {
         TextView textView = (TextView) findViewById(R.id.image_count);
         textView.setText(mText);
     }
@@ -592,8 +665,21 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
     @Override
     public void onLocationChanged(Location location) {
         try {
-            currentLatitude = location.getLatitude();
-            currentLongitude = location.getLongitude();
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+            Location myCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+//            currentLatitude = location.getLatitude();
+//            currentLongitude = location.getLongitude();
+            currentLatitude = myCurrentLocation.getLatitude();
+            currentLongitude = myCurrentLocation.getLongitude();
 
             logging.log("onLocationChanged: "+currentLatitude + " WORKS " + currentLongitude);
             coordinates.setText(currentLatitude + ", " + currentLongitude);
