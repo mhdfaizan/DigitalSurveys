@@ -212,7 +212,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
             public void onClick(View v) {
                 try {
                     databaseHandler = new DatabaseHandler(SurveyActivity.this);
-                    long value = databaseHandler.getSingleOutlet(Long.valueOf(ref_no), getShopNumber());
+                    long value = databaseHandler.getSingleOutlet(ref_no, getShopNumber());
                     if (value != 0) {
                         shop_number.setError("Already Exists");
                     } else if (getShopNumber() == 0) {
@@ -278,7 +278,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
 
             welcome_user.setText("Welcome, " + username);
             reference_number.setText("Reference Number: " + ref_no);
-            number_of_outlets.setText("Number of Outlets: " + getNumberOfOutlets(Long.valueOf(ref_no)));
+            number_of_outlets.setText("Number of Outlets: " + getNumberOfOutlets(ref_no));
             date_time.setText(date_time_string);
             image_count.setText("Image Count: " + imageCount);
         } catch (Exception e) {
@@ -286,13 +286,14 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
         }
     }
 
-    private int getNumberOfOutlets(long ref_no) {
+    private int getNumberOfOutlets(String ref_no) {
         int count = 0;
         try {
             databaseHandler = new DatabaseHandler(SurveyActivity.this);
             Cursor cursor = databaseHandler.getAllOutletsForReferenceNo(ref_no);
             if (cursor != null) {
                 count = cursor.getCount();
+                System.out.println("cursor.getCount():"+ count);
             }
             //logging.log("count: "+count);
         } catch (Exception e) {

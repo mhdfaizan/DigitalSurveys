@@ -567,12 +567,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     }
 
     // Getting all outlets for reference number
-    public Cursor getAllOutletsForReferenceNo(long ref_no) {
+    public Cursor getAllOutletsForReferenceNo(String ref_no) {
         SQLiteDatabase db = this.getReadableDatabase();
-        System.out.println("SELECT * FROM "+TABLE_OUTLETS + " WHERE "+REF_NO+" = "+ ref_no);
+        System.out.println("SELECT * FROM "+TABLE_OUTLETS + " WHERE "+REF_NO+" = '"+ ref_no +"'");
         Cursor cursor = null;
         try {
-            cursor = db.rawQuery("SELECT * FROM " + TABLE_OUTLETS + " WHERE " + REF_NO + " = " + ref_no, null);
+            cursor = db.rawQuery("SELECT * FROM " + TABLE_OUTLETS + " WHERE " + REF_NO + " = '"+ ref_no +"'", null);
         /*if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             String[] mcolumnNames = cursor.getColumnNames();
@@ -590,11 +590,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     }
 
     // Getting single outlet
-    public long getSingleOutlet(long ref_no, long shop_number) {
+    public long getSingleOutlet(String ref_no, long shop_number) {
         long value = 0;
         SQLiteDatabase db = this.getReadableDatabase();
         System.out.println("SELECT * FROM "+TABLE_OUTLETS+" WHERE "+REF_NO+"="+ref_no+" AND "+SHOP_NUMBER+"="+shop_number);
-        Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE_OUTLETS+" WHERE "+REF_NO+"="+ref_no+" AND "+SHOP_NUMBER+"="+shop_number, null);
+        Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE_OUTLETS+" WHERE "+REF_NO+"='"+ref_no+"' AND "+SHOP_NUMBER+"="+shop_number, null);
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
             value = cursor.getLong(cursor.getColumnIndex(REF_NO));

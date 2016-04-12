@@ -43,10 +43,10 @@ public class DatabaseExporter {
                         outletFile.delete();
                         File newOutletFile = new File(exportDir, "OutletsData.csv");
                         System.out.println("Old outlet file deleted and new created!");
-                        exportData(newOutletFile, cursor.getLong(0));
+                        exportData(newOutletFile, cursor.getString(0));
                     } else {
                         System.out.println("Already new!");
-                        exportData(outletFile, cursor.getLong(0));
+                        exportData(outletFile, cursor.getString(0));
                     }
 
                     System.out.println("ENVPATH: " + Environment.getExternalStorageDirectory());
@@ -76,7 +76,7 @@ public class DatabaseExporter {
         }
     }
 
-    public void exportData(File file, long ref_no) {
+    public void exportData(File file, String ref_no) {
         try {
             file.createNewFile();
             CSVWriter csvWriteOutlet = new CSVWriter(new FileWriter(file));

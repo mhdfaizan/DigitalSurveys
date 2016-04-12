@@ -42,9 +42,11 @@ public class MainActivity extends AppCompatActivity {
             attachControls();
             attachListeners();
             databaseHandler = new DatabaseHandler(MainActivity.this);
+//            Cursor cursor = databaseHandler.getAllOutletsForReferenceNo("0586");
+//            System.out.println("0586: "+cursor.getCount());
             logging = new Logging(true);
             preferencesManager = new PreferencesManager(getApplicationContext());
-//            username.setText("admin");
+//            usersssname.setText("admin");
 //            password.setText("123");
             if(isLocationServiceEnabled() == false){
                 showLocationDialog();
