@@ -131,7 +131,7 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
 //                    }
 //                }
 //            }, 0, 5000);//put here time 1000 milliseconds=1 second
-            timer.schedule(new MyTimerTask(savedInstanceState), 0,20000);
+            timer.schedule(new MyTimerTask(savedInstanceState), 0,60000);
 
 //            Typeface myTypeface = Typeface.createFromAsset(getAssets(), "ubuntu.ttf");
 //            welcome_user.setTypeface(myTypeface);
@@ -251,10 +251,16 @@ public class SurveyActivity extends AppCompatActivity implements GoogleApiClient
             public void onClick(View v) {
                 try {
                     if (getShopNumber() != 0) {
-                        if (imageCount < 10) {
-                            captureImage();
+                        databaseHandler = new DatabaseHandler(SurveyActivity.this);
+                        long value = databaseHandler.getSingleOutlet(ref_no, getShopNumber());
+                        if (value != 0) {
+                            shop_number.setError("Already Exists");
                         } else {
-                            Toast.makeText(SurveyActivity.this, "You have reached maximum number of images", Toast.LENGTH_LONG).show();
+                            if (imageCount < 10) {
+                                captureImage();
+                            } else {
+                                Toast.makeText(SurveyActivity.this, "You have reached maximum number of images", Toast.LENGTH_LONG).show();
+                            }
                         }
                     } else {
                         Toast.makeText(SurveyActivity.this, "Please enter Shop Number first", Toast.LENGTH_LONG).show();
